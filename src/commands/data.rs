@@ -259,13 +259,19 @@ pub async fn execute(client: &data::Client, args: DataArgs, output: OutputFormat
             sort_by,
             sort_dir,
         } => {
-            let request = ClosedPositionsRequest::builder()
+            let builder = ClosedPositionsRequest::builder()
                 .user(address)
                 .limit(limit)?
-                .maybe_offset(offset)?
-                .maybe_sort_by(sort_by.map(Into::into))
-                .sort_direction(sort_dir.into())
-                .build();
+                .maybe_offset(offset)?;
+
+            let request = if let Some(sort_by) = sort_by {
+                builder
+                    .sort_by(sort_by.into())
+                    .sort_direction(sort_dir.into())
+                    .build()
+            } else {
+                builder.build()
+            };
 
             let positions = client.closed_positions(&request).await?;
             print_closed_positions(&positions, &output)?;
