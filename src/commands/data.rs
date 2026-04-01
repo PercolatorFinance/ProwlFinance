@@ -51,6 +51,14 @@ pub enum DataCommand {
         /// Pagination offset
         #[arg(long)]
         offset: Option<i32>,
+
+        /// Sort field: pnl, title, price, avg-price, timestamp
+        #[arg(long)]
+        sort_by: Option<ClosedPositionSortBy>,
+
+        /// Sort direction: asc, desc
+        #[arg(long, default_value = "desc")]
+        sort_dir: ClosedPositionSortDir,
     },
 
     /// Get total position value for a wallet address
@@ -191,6 +199,42 @@ impl From<OrderBy> for polymarket_client_sdk::data::types::LeaderboardOrderBy {
     }
 }
 
+#[derive(Clone, Debug, clap::ValueEnum)]
+pub enum ClosedPositionSortBy {
+    Pnl,
+    Title,
+    Price,
+    AvgPrice,
+    Timestamp,
+}
+
+impl From<ClosedPositionSortBy> for polymarket_client_sdk::data::types::ClosedPositionSortBy {
+    fn from(v: ClosedPositionSortBy) -> Self {
+        match v {
+            ClosedPositionSortBy::Pnl => Self::RealizedPnl,
+            ClosedPositionSortBy::Title => Self::Title,
+            ClosedPositionSortBy::Price => Self::Price,
+            ClosedPositionSortBy::AvgPrice => Self::AvgPrice,
+            ClosedPositionSortBy::Timestamp => Self::Timestamp,
+        }
+    }
+}
+
+#[derive(Clone, Debug, clap::ValueEnum)]
+pub enum ClosedPositionSortDir {
+    Asc,
+    Desc,
+}
+
+impl From<ClosedPositionSortDir> for polymarket_client_sdk::data::types::SortDirection {
+    fn from(v: ClosedPositionSortDir) -> Self {
+        match v {
+            ClosedPositionSortDir::Asc => Self::Asc,
+            ClosedPositionSortDir::Desc => Self::Desc,
+        }
+    }
+}
+
 pub async fn execute(client: &data::Client, args: DataArgs, output: OutputFormat) -> Result<()> {
     match args.command {
         DataCommand::Positions {
@@ -212,11 +256,15 @@ pub async fn execute(client: &data::Client, args: DataArgs, output: OutputFormat
             address,
             limit,
             offset,
+            sort_by,
+            sort_dir,
         } => {
             let request = ClosedPositionsRequest::builder()
                 .user(address)
                 .limit(limit)?
                 .maybe_offset(offset)?
+                .maybe_sort_by(sort_by.map(Into::into))
+                .sort_direction(sort_dir.into())
                 .build();
 
             let positions = client.closed_positions(&request).await?;

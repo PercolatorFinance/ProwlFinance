@@ -81,7 +81,7 @@ pub fn print_positions(positions: &[Position], output: &OutputFormat) -> anyhow:
                         "proxy_wallet": p.proxy_wallet.to_string(),
                         "redeemable": p.redeemable,
                         "mergeable": p.mergeable,
-                        "end_date": p.end_date.to_string(),
+                        "end_date": p.end_date.map(|d| d.to_string()),
                         "negative_risk": p.negative_risk,
                     })
                 })
