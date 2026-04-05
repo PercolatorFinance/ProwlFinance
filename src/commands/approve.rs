@@ -3,6 +3,7 @@
 
 use alloy::primitives::U256;
 use alloy::sol;
+use alloy::sol_types::SolCall;
 use anyhow::{Context, Result};
 use clap::{Args, Subcommand};
 use polymarket_client_sdk::types::{Address, address};
@@ -11,6 +12,8 @@ use polymarket_client_sdk::{POLYGON, contract_config};
 use crate::auth;
 use crate::output::OutputFormat;
 use crate::output::approve::{ApprovalStatus, print_approval_status, print_tx_result};
+
+use super::proxy;
 
 /// Polygon USDC (same address as `USDC_ADDRESS_STR`; `address!` requires a literal).
 const USDC_ADDRESS: Address = address!("0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174");
@@ -81,20 +84,26 @@ pub async fn execute(
     args: ApproveArgs,
     output: OutputFormat,
     private_key: Option<&str>,
+    signature_type: Option<&str>,
 ) -> Result<()> {
     match args.command {
-        ApproveCommand::Check { address } => check(address, private_key, output).await,
-        ApproveCommand::Set => set(private_key, output).await,
+        ApproveCommand::Check { address } => {
+            check(address, private_key, signature_type, output).await
+        }
+        ApproveCommand::Set => set(private_key, signature_type, output).await,
     }
 }
 
 async fn check(
     address_arg: Option<Address>,
     private_key: Option<&str>,
+    signature_type: Option<&str>,
     output: OutputFormat,
 ) -> Result<()> {
     let owner: Address = if let Some(addr) = address_arg {
         addr
+    } else if proxy::is_proxy_mode(signature_type)? {
+        proxy::derive_proxy_address(private_key)?
     } else {
         let signer = auth::resolve_signer(private_key)?;
         polymarket_client_sdk::auth::Signer::address(&signer)
@@ -135,13 +144,13 @@ async fn check(
     print_approval_status(&statuses, &output)
 }
 
-async fn set(private_key: Option<&str>, output: OutputFormat) -> Result<()> {
-    let provider = auth::create_provider(private_key).await?;
+async fn set(
+    private_key: Option<&str>,
+    signature_type: Option<&str>,
+    output: OutputFormat,
+) -> Result<()> {
+    let use_proxy = proxy::is_proxy_mode(signature_type)?;
     let config = contract_config(POLYGON, false).context("No contract config for Polygon")?;
-
-    let usdc = IERC20::new(USDC_ADDRESS, provider.clone());
-    let ctf = IERC1155::new(config.conditional_tokens, provider.clone());
-
     let targets = approval_targets()?;
     let total = targets.len() * 2;
 
@@ -155,17 +164,14 @@ async fn set(private_key: Option<&str>, output: OutputFormat) -> Result<()> {
     for target in &targets {
         step += 1;
         let label = format!("USDC \u{2192} {}", target.name);
-        let tx_hash = usdc
-            .approve(target.address, U256::MAX)
-            .send()
+        let calldata = IERC20::approveCall {
+            spender: target.address,
+            value: U256::MAX,
+        }
+        .abi_encode();
+        let (tx_hash, _) = proxy::send_call(private_key, use_proxy, USDC_ADDRESS, calldata)
             .await
-            .context(format!("Failed to send USDC approval for {}", target.name))?
-            .watch()
-            .await
-            .context(format!(
-                "Failed to confirm USDC approval for {}",
-                target.name
-            ))?;
+            .context(format!("Failed USDC approval for {}", target.name))?;
 
         match output {
             OutputFormat::Table => print_tx_result(step, total, &label, tx_hash),
@@ -179,17 +185,15 @@ async fn set(private_key: Option<&str>, output: OutputFormat) -> Result<()> {
 
         step += 1;
         let label = format!("CTF  \u{2192} {}", target.name);
-        let tx_hash = ctf
-            .setApprovalForAll(target.address, true)
-            .send()
-            .await
-            .context(format!("Failed to send CTF approval for {}", target.name))?
-            .watch()
-            .await
-            .context(format!(
-                "Failed to confirm CTF approval for {}",
-                target.name
-            ))?;
+        let calldata = IERC1155::setApprovalForAllCall {
+            operator: target.address,
+            approved: true,
+        }
+        .abi_encode();
+        let (tx_hash, _) =
+            proxy::send_call(private_key, use_proxy, config.conditional_tokens, calldata)
+                .await
+                .context(format!("Failed CTF approval for {}", target.name))?;
 
         match output {
             OutputFormat::Table => print_tx_result(step, total, &label, tx_hash),
