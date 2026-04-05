@@ -191,10 +191,9 @@ async fn set(
                 approved: true,
             }
             .abi_encode();
-            let tx_hash =
-                proxy::send_via_factory(private_key, config.conditional_tokens, calldata)
-                    .await
-                    .context(format!("Failed CTF approval for {}", target.name))?;
+            let tx_hash = proxy::send_via_factory(private_key, config.conditional_tokens, calldata)
+                .await
+                .context(format!("Failed CTF approval for {}", target.name))?;
 
             match output {
                 OutputFormat::Table => print_tx_result(step, total, &label, tx_hash),

@@ -5,8 +5,8 @@ pub(crate) mod proxy {
     use alloy::primitives::U256;
     use alloy::sol;
     use anyhow::{Context, Result};
-    use polymarket_client_sdk::types::{Address, B256};
     use polymarket_client_sdk::POLYGON;
+    use polymarket_client_sdk::types::{Address, B256};
 
     use crate::auth;
 
