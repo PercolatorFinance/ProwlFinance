@@ -40,30 +40,6 @@ pub(crate) mod proxy {
             .ok_or_else(|| anyhow::anyhow!("Proxy wallet derivation not supported on this chain"))
     }
 
-    pub async fn send_via_factory(
-        private_key: Option<&str>,
-        target: Address,
-        calldata: Vec<u8>,
-    ) -> Result<B256> {
-        let provider = auth::create_provider(private_key).await?;
-        let factory = IProxyWallet::new(PROXY_FACTORY, &provider);
-        let call = IProxyWallet::ProxyCall {
-            typeCode: 1,
-            to: target,
-            value: U256::ZERO,
-            data: calldata.into(),
-        };
-        let tx_hash = factory
-            .proxy(vec![call])
-            .send()
-            .await
-            .context("Failed to send proxy transaction")?
-            .watch()
-            .await
-            .context("Failed to confirm proxy transaction")?;
-        Ok(tx_hash)
-    }
-
     pub async fn send_call(
         private_key: Option<&str>,
         use_proxy: bool,

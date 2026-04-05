@@ -170,7 +170,7 @@ async fn set(
                 value: U256::MAX,
             }
             .abi_encode();
-            let tx_hash = proxy::send_via_factory(private_key, USDC_ADDRESS, calldata)
+            let (tx_hash, _) = proxy::send_call(private_key, true, USDC_ADDRESS, calldata)
                 .await
                 .context(format!("Failed USDC approval for {}", target.name))?;
 
@@ -191,9 +191,10 @@ async fn set(
                 approved: true,
             }
             .abi_encode();
-            let tx_hash = proxy::send_via_factory(private_key, config.conditional_tokens, calldata)
-                .await
-                .context(format!("Failed CTF approval for {}", target.name))?;
+            let (tx_hash, _) =
+                proxy::send_call(private_key, true, config.conditional_tokens, calldata)
+                    .await
+                    .context(format!("Failed CTF approval for {}", target.name))?;
 
             match output {
                 OutputFormat::Table => print_tx_result(step, total, &label, tx_hash),
