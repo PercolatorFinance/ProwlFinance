@@ -6,11 +6,20 @@ Rust CLI for Polymarket. Browse markets, place orders, manage positions, and int
 
 ## Install
 
+### Homebrew (macOS / Linux)
+
+```bash
+brew tap Polymarket/polymarket-cli https://github.com/Polymarket/polymarket-cli
+brew install polymarket
+```
+
+### Shell script
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/Polymarket/polymarket-cli/main/install.sh | sh
 ```
 
-Or build from source:
+### Build from source
 
 ```bash
 git clone https://github.com/Polymarket/polymarket-cli

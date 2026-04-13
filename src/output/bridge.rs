@@ -1,5 +1,3 @@
-#![allow(clippy::items_after_statements)]
-
 use polymarket_client_sdk::bridge::types::{
     DepositResponse, DepositTransactionStatus, StatusResponse, SupportedAssetsResponse,
 };
@@ -7,7 +5,7 @@ use serde_json::json;
 use tabled::settings::Style;
 use tabled::{Table, Tabled};
 
-use super::{OutputFormat, detail_field, format_decimal, print_detail_table};
+use super::{DASH, OutputFormat, detail_field, format_decimal, print_detail_table};
 
 pub fn print_deposit(response: &DepositResponse, output: &OutputFormat) -> anyhow::Result<()> {
     match output {
@@ -75,7 +73,7 @@ pub fn print_supported_assets(
             println!("{table}");
         }
         OutputFormat::Json => {
-            let data: Vec<_> = response
+            let assets: Vec<_> = response
                 .supported_assets
                 .iter()
                 .map(|a| {
@@ -90,6 +88,10 @@ pub fn print_supported_assets(
                     })
                 })
                 .collect();
+            let data = json!({
+                "supported_assets": assets,
+                "note": response.note,
+            });
             super::print_json(&data)?;
         }
     }
@@ -142,7 +144,7 @@ pub fn print_status(response: &StatusResponse, output: &OutputFormat) -> anyhow:
                     tx_hash: tx
                         .tx_hash
                         .as_deref()
-                        .map_or_else(|| "—".into(), |h| super::truncate(h, 14)),
+                        .map_or_else(|| DASH.into(), |h| super::truncate(h, 14)),
                 })
                 .collect();
             let table = Table::new(rows).with(Style::rounded()).to_string();

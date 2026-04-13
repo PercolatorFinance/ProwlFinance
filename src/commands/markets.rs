@@ -12,9 +12,9 @@ use polymarket_client_sdk::gamma::{
 };
 
 use super::{flag_matches, is_numeric_id};
-use crate::output::markets::{print_market_detail, print_markets_table};
-use crate::output::tags::print_tags_table;
-use crate::output::{OutputFormat, print_json};
+use crate::output::OutputFormat;
+use crate::output::markets::{print_market, print_markets};
+use crate::output::tags::print_tags;
 
 #[derive(Args)]
 pub struct MarketsArgs {
@@ -109,7 +109,7 @@ async fn list_markets(
             .maybe_closed(closed)
             .maybe_offset(Some(next_offset))
             .maybe_order(order.clone())
-            .maybe_ascending(if ascending { Some(true) } else { None })
+            .ascending(ascending)
             .build();
 
         let page = client.markets(&request).await?;
@@ -157,11 +157,7 @@ pub async fn execute(
         } => {
             let markets =
                 list_markets(client, limit, offset, order, ascending, active, closed).await?;
-
-            match output {
-                OutputFormat::Table => print_markets_table(&markets),
-                OutputFormat::Json => print_json(&markets)?,
-            }
+            print_markets(&markets, &output)?;
         }
 
         MarketsCommand::Get { id } => {
@@ -174,10 +170,7 @@ pub async fn execute(
                 client.market_by_slug(&req).await?
             };
 
-            match output {
-                OutputFormat::Table => print_market_detail(&market),
-                OutputFormat::Json => print_json(&market)?,
-            }
+            print_market(&market, &output)?;
         }
 
         MarketsCommand::Search { query, limit } => {
@@ -195,20 +188,14 @@ pub async fn execute(
                 .flat_map(|e| e.markets.unwrap_or_default())
                 .collect();
 
-            match output {
-                OutputFormat::Table => print_markets_table(&markets),
-                OutputFormat::Json => print_json(&markets)?,
-            }
+            print_markets(&markets, &output)?;
         }
 
         MarketsCommand::Tags { id } => {
             let req = MarketTagsRequest::builder().id(id).build();
             let tags = client.market_tags(&req).await?;
 
-            match output {
-                OutputFormat::Table => print_tags_table(&tags),
-                OutputFormat::Json => print_json(&tags)?,
-            }
+            print_tags(&tags, &output)?;
         }
     }
 

@@ -9,9 +9,9 @@ use polymarket_client_sdk::gamma::{
 };
 
 use super::{flag_matches, is_numeric_id};
-use crate::output::events::{print_event_detail, print_events_table};
-use crate::output::tags::print_tags_table;
-use crate::output::{OutputFormat, print_json};
+use crate::output::OutputFormat;
+use crate::output::events::{print_event, print_events};
+use crate::output::tags::print_tags;
 
 #[derive(Args)]
 pub struct EventsArgs {
@@ -94,17 +94,14 @@ pub async fn execute(client: &gamma::Client, args: EventsArgs, output: OutputFor
                 .maybe_active(active)
                 .maybe_closed(closed)
                 .maybe_offset(offset)
-                .maybe_ascending(if ascending { Some(true) } else { None })
+                .ascending(ascending)
                 .maybe_tag_slug(tag)
-                .order(order.into_iter().collect::<Vec<_>>())
+                // EventsRequest::order is Vec<String>; into_iter on Option yields 0 or 1 items.
+                .order(order.into_iter().collect())
                 .build();
 
             let events = apply_status_filters(client.events(&request).await?, active, closed);
-
-            match output {
-                OutputFormat::Table => print_events_table(&events),
-                OutputFormat::Json => print_json(&events)?,
-            }
+            print_events(&events, &output)?;
         }
 
         EventsCommand::Get { id } => {
@@ -117,20 +114,14 @@ pub async fn execute(client: &gamma::Client, args: EventsArgs, output: OutputFor
                 client.event_by_slug(&req).await?
             };
 
-            match output {
-                OutputFormat::Table => print_event_detail(&event),
-                OutputFormat::Json => print_json(&event)?,
-            }
+            print_event(&event, &output)?;
         }
 
         EventsCommand::Tags { id } => {
             let req = EventTagsRequest::builder().id(id).build();
             let tags = client.event_tags(&req).await?;
 
-            match output {
-                OutputFormat::Table => print_tags_table(&tags),
-                OutputFormat::Json => print_json(&tags)?,
-            }
+            print_tags(&tags, &output)?;
         }
     }
 
