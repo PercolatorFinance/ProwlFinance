@@ -9,20 +9,20 @@ Rust CLI for Polymarket. Browse markets, place orders, manage positions, and int
 ### Homebrew (macOS / Linux)
 
 ```bash
-brew tap Polymarket/polymarket-cli https://github.com/Polymarket/polymarket-cli
+brew tap Polymarket/polymarket-cli [https://github.com/Polymarket/polymarket-cli](https://github.com/Polymarket/polymarket-cli)
 brew install polymarket
 ```
 
 ### Shell script
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Polymarket/polymarket-cli/main/install.sh | sh
+curl -sSL [https://raw.githubusercontent.com/Polymarket/polymarket-cli/main/install.sh](https://raw.githubusercontent.com/Polymarket/polymarket-cli/main/install.sh) | sh
 ```
 
 ### Build from source
 
 ```bash
-git clone https://github.com/Polymarket/polymarket-cli
+git clone [https://github.com/Polymarket/polymarket-cli](https://github.com/Polymarket/polymarket-cli)
 cd polymarket-cli
 cargo install --path .
 ```
@@ -108,7 +108,7 @@ Every command supports `--output table` (default) and `--output json`.
 polymarket markets list --limit 2
 ```
 
-```
+```text
  Question                            Price (Yes)  Volume   Liquidity  Status
  Will Trump win the 2024 election?   52.00¢       $145.2M  $1.2M      Active
  Will BTC hit $100k by Dec 2024?     67.30¢       $89.4M   $430.5K    Active
@@ -121,8 +121,8 @@ polymarket -o json markets list --limit 2
 
 ```json
 [
-  { "id": "12345", "question": "Will Trump win the 2024 election?", "outcomePrices": ["0.52", "0.48"], ... },
-  { "id": "67890", "question": "Will BTC hit $100k by Dec 2024?", ... }
+  { "id": "12345", "question": "Will Trump win the 2024 election?", "outcomePrices": ["0.52", "0.48"] },
+  { "id": "67890", "question": "Will BTC hit $100k by Dec 2024?" }
 ]
 ```
 
@@ -202,9 +202,9 @@ All read-only — no wallet needed.
 polymarket clob ok
 
 # Prices
-polymarket clob price 48331043336612883... --side buy
-polymarket clob midpoint 48331043336612883...
-polymarket clob spread 48331043336612883...
+polymarket clob price <TOKEN_ID> --side buy
+polymarket clob midpoint <TOKEN_ID>
+polymarket clob spread <TOKEN_ID>
 
 # Batch queries (comma-separated token IDs)
 polymarket clob batch-prices "TOKEN1,TOKEN2" --side buy
@@ -212,23 +212,23 @@ polymarket clob midpoints "TOKEN1,TOKEN2"
 polymarket clob spreads "TOKEN1,TOKEN2"
 
 # Order book
-polymarket clob book 48331043336612883...
+polymarket clob book <TOKEN_ID>
 polymarket clob books "TOKEN1,TOKEN2"
 
 # Last trade
-polymarket clob last-trade 48331043336612883...
+polymarket clob last-trade <TOKEN_ID>
 
 # Market info
-polymarket clob market 0xABC123...  # by condition ID
-polymarket clob markets             # list all
+polymarket clob market 0xCONDITION_ID
+polymarket clob markets
 
 # Price history
-polymarket clob price-history 48331043336612883... --interval 1d --fidelity 30
+polymarket clob price-history <TOKEN_ID> --interval 1d --fidelity 30
 
 # Metadata
-polymarket clob tick-size 48331043336612883...
-polymarket clob fee-rate 48331043336612883...
-polymarket clob neg-risk 48331043336612883...
+polymarket clob tick-size <TOKEN_ID>
+polymarket clob fee-rate <TOKEN_ID>
+polymarket clob neg-risk <TOKEN_ID>
 polymarket clob time
 polymarket clob geoblock
 ```
@@ -242,12 +242,12 @@ Requires a configured wallet.
 ```bash
 # Place a limit order (buy 10 shares at $0.50)
 polymarket clob create-order \
-  --token 48331043336612883... \
+  --token <TOKEN_ID> \
   --side buy --price 0.50 --size 10
 
 # Place a market order (buy $5 worth)
 polymarket clob market-order \
-  --token 48331043336612883... \
+  --token <TOKEN_ID> \
   --side buy --amount 5
 
 # Post multiple orders at once
@@ -260,18 +260,18 @@ polymarket clob post-orders \
 # Cancel
 polymarket clob cancel ORDER_ID
 polymarket clob cancel-orders "ORDER1,ORDER2"
-polymarket clob cancel-market --market 0xCONDITION...
+polymarket clob cancel-market --market 0xCONDITION_ID
 polymarket clob cancel-all
 
 # View your orders and trades
 polymarket clob orders
-polymarket clob orders --market 0xCONDITION...
+polymarket clob orders --market 0xCONDITION_ID
 polymarket clob order ORDER_ID
 polymarket clob trades
 
 # Check balances
 polymarket clob balance --asset-type collateral
-polymarket clob balance --asset-type conditional --token 48331043336612883...
+polymarket clob balance --asset-type conditional --token <TOKEN_ID>
 polymarket clob update-balance --asset-type collateral
 ```
 
@@ -285,7 +285,7 @@ polymarket clob earnings --date 2024-06-15
 polymarket clob earnings-markets --date 2024-06-15
 polymarket clob reward-percentages
 polymarket clob current-rewards
-polymarket clob market-reward 0xCONDITION...
+polymarket clob market-reward 0xCONDITION_ID
 
 # Check if orders are scoring rewards
 polymarket clob order-scoring ORDER_ID
@@ -334,6 +334,8 @@ polymarket data builder-volume --period month
 
 Before trading, Polymarket contracts need ERC-20 (USDC) and ERC-1155 (CTF token) approvals.
 
+> **Note:** To set approvals, ensure your CLI wallet is funded. You can view your public address using `polymarket wallet show`. Send MATIC (for gas) and USDC.e (for trading) on the Polygon network to this address.
+
 ```bash
 # Check current approvals (read-only)
 polymarket approve check
@@ -349,21 +351,21 @@ Split, merge, and redeem conditional tokens directly on-chain.
 
 ```bash
 # Split $10 USDC into YES/NO tokens
-polymarket ctf split --condition 0xCONDITION... --amount 10
+polymarket ctf split --condition 0xCONDITION_ID --amount 10
 
 # Merge tokens back to USDC
-polymarket ctf merge --condition 0xCONDITION... --amount 10
+polymarket ctf merge --condition 0xCONDITION_ID --amount 10
 
 # Redeem winning tokens after resolution
-polymarket ctf redeem --condition 0xCONDITION...
+polymarket ctf redeem --condition 0xCONDITION_ID
 
 # Redeem neg-risk positions
-polymarket ctf redeem-neg-risk --condition 0xCONDITION... --amounts "10,5"
+polymarket ctf redeem-neg-risk --condition 0xCONDITION_ID --amounts "10,5"
 
 # Calculate IDs (read-only, no wallet needed)
 polymarket ctf condition-id --oracle 0xORACLE... --question 0xQUESTION... --outcomes 2
-polymarket ctf collection-id --condition 0xCONDITION... --index-set 1
-polymarket ctf position-id --collection 0xCOLLECTION...
+polymarket ctf collection-id --condition 0xCONDITION_ID --index-set 1
+polymarket ctf position-id --collection 0xCOLLECTION_ID
 ```
 
 `--amount` is in USDC (e.g., `10` = $10). The `--partition` flag defaults to binary (`1,2`). On-chain operations require MATIC for gas on Polygon.
@@ -400,7 +402,7 @@ polymarket wallet reset --force        # Delete without confirmation
 ```bash
 polymarket shell
 # polymarket> markets list --limit 3
-# polymarket> clob book 48331043336612883...
+# polymarket> clob book <TOKEN_ID>
 # polymarket> exit
 ```
 
@@ -423,8 +425,8 @@ polymarket --help
 ```bash
 polymarket markets search "bitcoin" --limit 5
 polymarket markets get bitcoin-above-100k
-polymarket clob book 48331043336612883...
-polymarket clob price-history 48331043336612883... --interval 1d
+polymarket clob book <TOKEN_ID>
+polymarket clob price-history <TOKEN_ID> --interval 1d
 ```
 
 ### Set up a new wallet and start trading
@@ -433,7 +435,7 @@ polymarket clob price-history 48331043336612883... --interval 1d
 polymarket wallet create
 polymarket approve set                    # needs MATIC for gas
 polymarket clob balance --asset-type collateral
-polymarket clob market-order --token TOKEN_ID --side buy --amount 5
+polymarket clob market-order --token <TOKEN_ID> --side buy --amount 5
 ```
 
 ### Monitor your portfolio
@@ -449,7 +451,7 @@ polymarket clob trades
 
 ```bash
 # Place order
-polymarket clob create-order --token TOKEN_ID --side buy --price 0.45 --size 20
+polymarket clob create-order --token <TOKEN_ID> --side buy --price 0.45 --size 20
 
 # Check it
 polymarket clob orders
@@ -468,7 +470,7 @@ polymarket clob cancel-all
 polymarket -o json markets list --limit 100 | jq '.[].question'
 
 # Check prices programmatically
-polymarket -o json clob midpoint TOKEN_ID | jq '.mid'
+polymarket -o json clob midpoint <TOKEN_ID> | jq '.mid'
 
 # Error handling in scripts
 if ! result=$(polymarket -o json clob balance --asset-type collateral 2>/dev/null); then
@@ -478,7 +480,7 @@ fi
 
 ## Architecture
 
-```
+```text
 src/
   main.rs        -- CLI entry point, clap parsing, error handling
   auth.rs        -- Wallet resolution, RPC provider, CLOB authentication
